@@ -593,6 +593,427 @@ If privacy, controllability, cost, and reliability matter, local memory wins mos
 
 ---
 
+## Beginner-friendly install guide for Android/Termux | 给新手的 Android/Termux 安装照抄版
+
+This section is intentionally written for beginners who want something close to “copy this, then fix what breaks.”
+
+这部分是专门给新手写的，目标就是尽量做到“照着抄，哪里炸了就按这里排查”。
+
+### Reality check first | 先说大实话
+
+OpenClaw on Termux is usable, but it is not yet a totally frictionless one-click experience.
+
+OpenClaw 在 Termux 上是能用的，但目前还不是完全无脑一键装好那种体验。
+
+What this means:
+
+这意味着：
+
+- you may need to try more than one install path | 你可能需要尝试不止一种安装路径
+- some plugins work immediately, some need manual repair | 有些插件一把过，有些需要手修
+- native Node dependencies are the main trouble source | Node 原生依赖是主要故障源
+- channel login and model auth are usually separate steps | 渠道登录和模型认证通常是两步事
+
+---
+
+## Step 0: Basic environment prep | 第 0 步：先把基础环境准备好
+
+Suggested baseline:
+
+建议的基础环境：
+
+```bash
+pkg update && pkg upgrade -y
+pkg install -y git nodejs-lts python clang make pkg-config
+```
+
+If a package later fails to build, you may also need:
+
+如果后面遇到构建失败，常见还要补：
+
+```bash
+pkg install -y libvips rust
+npm install -g node-gyp node-addon-api
+```
+
+Notes:
+
+说明：
+
+- `nodejs-lts` is often safer than aggressively new Node versions.
+- If you already use a newer Node and things work, you do not have to downgrade immediately.
+
+- `nodejs-lts` 往往比特别新的 Node 版本更稳。
+- 如果你已经在用更高版本 Node 且目前没炸，不一定要立刻降级。
+
+---
+
+## Step 1: Install OpenClaw | 第 1 步：安装 OpenClaw
+
+The simplest attempt:
+
+最简单的第一把：
+
+```bash
+npm install -g openclaw
+```
+
+If this fails around `sharp` / native build issues, try the workaround path:
+
+如果这里卡在 `sharp` / 原生构建问题，试下面这个绕法：
+
+```bash
+SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install -g openclaw --no-fund --no-audit --loglevel error
+```
+
+If needed, ensure build helpers exist first:
+
+必要时，先补构建依赖：
+
+```bash
+npm install -g node-gyp node-addon-api
+```
+
+Check install:
+
+安装后检查：
+
+```bash
+openclaw --version
+openclaw help
+```
+
+---
+
+## Step 2: Run onboarding | 第 2 步：先跑一次 onboarding
+
+For most beginners, this is the easiest entry point:
+
+对大多数新手来说，这一步最省脑子：
+
+```bash
+openclaw onboard
+```
+
+If you already know you want OpenAI API key auth:
+
+如果你已经明确知道自己要用 OpenAI API key：
+
+```bash
+openclaw onboard --auth-choice openai-api-key
+```
+
+If you want Codex / ChatGPT subscription auth instead:
+
+如果你想走 Codex / ChatGPT 订阅登录：
+
+```bash
+openclaw onboard --auth-choice openai-codex
+```
+
+What onboarding usually helps you do:
+
+onboarding 通常会帮你处理：
+
+- workspace setup | 工作区初始化
+- model/provider auth | 模型提供商认证
+- channel setup | 渠道配置
+- gateway basics | gateway 基础配置
+
+---
+
+## Step 3: Choose your model path | 第 3 步：选择模型接入方式
+
+### Option A: OpenAI API key | 方案 A：OpenAI API key
+
+Best if you want stable API usage and direct billing.
+
+适合想要稳定 API 调用、直接按量计费的人。
+
+```bash
+openclaw onboard --auth-choice openai-api-key
+```
+
+Or set the environment variable first:
+
+或者先设环境变量：
+
+```bash
+export OPENAI_API_KEY="sk-..."
+openclaw onboard --auth-choice openai-api-key
+```
+
+### Option B: Codex / ChatGPT subscription login | 方案 B：Codex / ChatGPT 订阅登录
+
+Best if you want to use Codex-style OpenAI auth rather than normal API-key billing.
+
+适合想走 Codex 风格登录，而不是普通 API key 计费的人。
+
+```bash
+openclaw onboard --auth-choice openai-codex
+```
+
+You can also run auth directly:
+
+也可以直接单独登录：
+
+```bash
+openclaw models auth login --provider openai-codex
+```
+
+Important note:
+
+重要提醒：
+
+Codex OAuth and OpenAI API keys are not the same thing.
+
+Codex OAuth 和 OpenAI API key 不是一回事。
+
+### Option C: Claude / Anthropic or other providers | 方案 C：Claude / Anthropic 或其他模型商
+
+If you want Claude, Gemini, OpenRouter, or another provider, `openclaw onboard` / `openclaw configure` is usually the easiest path.
+
+如果你想接 Claude、Gemini、OpenRouter 或别的模型商，通常最简单的做法还是跑 `openclaw onboard` 或 `openclaw configure`。
+
+Useful follow-up commands:
+
+常用后续命令：
+
+```bash
+openclaw configure
+openclaw models status
+openclaw models list
+```
+
+If you are unsure whether the model is really configured, check it instead of guessing.
+
+如果你不确定模型到底配好了没，直接查，不要猜。
+
+---
+
+## Step 4: Link a chat channel | 第 4 步：连接聊天渠道
+
+If you only want local testing first, you can skip channels and use dashboard/UI first.
+
+如果你一开始只想本地试，不一定要立刻接聊天渠道，可以先用 dashboard / UI。
+
+But for many people, the first real target is WhatsApp.
+
+但很多人第一目标都是 WhatsApp。
+
+### WhatsApp quick start | WhatsApp 快速开始
+
+Install/login path:
+
+安装/登录路径：
+
+```bash
+openclaw channels login --channel whatsapp
+```
+
+If the plugin is not installed yet, OpenClaw should offer the install flow.
+
+如果插件还没装，OpenClaw 一般会顺手给出安装流程。
+
+Manual install is also possible:
+
+也可以手动安装：
+
+```bash
+openclaw plugins install @openclaw/whatsapp
+```
+
+Then start the gateway/listener:
+
+然后启动 gateway / 监听：
+
+```bash
+openclaw gateway
+```
+
+---
+
+## Common beginner problem: WhatsApp QR code does not show or pairing fails
+## 新手高频坑：WhatsApp 二维码不出来 / 配对失败
+
+This is common enough that it deserves its own section.
+
+这个问题很常见，值得单独写。
+
+### Possible symptoms | 常见现象
+
+- QR code does not appear | 二维码不显示
+- QR flashes and disappears too fast | 二维码一闪而过
+- scan succeeds but session does not stay connected | 扫码成功但会话没连上
+- plugin/login command stalls | 登录命令卡住
+- WhatsApp Web session dies after initial link | 刚连上就掉线
+
+### What to try first | 第一轮排查建议
+
+1. **Run login again in a clean shell**
+
+```bash
+openclaw channels login --channel whatsapp
+```
+
+2. **Make sure the WhatsApp plugin is really installed**
+
+```bash
+openclaw plugins install @openclaw/whatsapp
+```
+
+3. **Start OpenClaw/gateway in the foreground and watch logs**
+
+```bash
+openclaw gateway
+```
+
+4. **Do not assume Android service commands work the same as desktop Linux**
+
+On Termux, service-management behavior is different.
+
+在 Termux 上，服务管理行为和桌面 Linux 不一样。
+
+5. **Try again after restarting the current OpenClaw process/session**
+
+如果是当前进程状态脏了，直接重开当前 OpenClaw 会话往往比瞎试配置更有用。
+
+### Practical notes | 实战提醒
+
+- WhatsApp linking is often more reliable when you let OpenClaw own a dedicated number.
+- Personal-number setups are possible, but they are easier to confuse.
+- If the QR flow behaves strangely, suspect the running session state, plugin state, or network/session instability before suspecting your phone.
+
+- 用独立号码给 OpenClaw 挂 WhatsApp，通常更稳。
+- 个人号也能用，但更容易绕进混乱状态。
+- 如果二维码流程很怪，优先怀疑当前运行进程状态、插件状态、网络/会话不稳，而不是先怀疑手机坏了。
+
+---
+
+## Step 5: Verify model + channel separately | 第 5 步：模型和渠道分开验
+
+A lot of beginners mix these together.
+
+很多新手会把这两件事混成一件。
+
+But they are different:
+
+但其实它们是两件不同的事：
+
+- **Model works** ≠ channel works
+- **Channel linked** ≠ model configured correctly
+
+Useful checks:
+
+实用检查命令：
+
+```bash
+openclaw models status
+openclaw status
+```
+
+If chat works but answers fail, check model auth.
+
+如果渠道能连、但回复不正常，先查模型认证。
+
+If model is configured but messages do not arrive, check the channel side.
+
+如果模型没问题、但消息进不来，先查渠道侧。
+
+---
+
+## Step 6: Expect native-module trouble on Android | 第 6 步：默认提防 Android 上的原生模块问题
+
+This is the main theme of Termux/OpenClaw troubleshooting.
+
+这是 Termux/OpenClaw 排错的主线。
+
+Typical examples include:
+
+典型例子包括：
+
+- `sharp`
+- image/video/media dependencies
+- prebuilt binary mismatch
+- npm packages that assume Linux != Android
+
+If something feels mysteriously broken, especially around media handling, check native dependencies first.
+
+如果有东西莫名其妙坏了，特别是和媒体处理有关，优先查原生依赖。
+
+---
+
+## Real example: image reading broke and was later fixed | 真案例：识图坏过，后来修好了
+
+One concrete failure encountered on this setup:
+
+这台机器上已经实际踩过的一个坑：
+
+```text
+Could not load the "sharp" module using the android-arm64 runtime
+```
+
+This broke OpenClaw image reading / vision.
+
+这会直接让 OpenClaw 的识图/读图失效。
+
+The practical fix that worked:
+
+最后实测有效的修法：
+
+```bash
+cd /data/data/com.termux/files/usr/lib/node_modules/openclaw
+npm_config_cpu=wasm32 npm_config_force=true npm install --no-save @img/sharp-wasm32@0.34.5
+```
+
+Then restart the running OpenClaw process/session.
+
+然后重启当前运行中的 OpenClaw 进程 / 会话。
+
+This is a good example of why Termux users should not panic at the first failure.
+
+这就是一个典型例子：Termux 用户第一次炸时不要慌，很多时候不是“没救”，而是“要补环境”。
+
+---
+
+## Minimal newbie command list | 给新手的最小指令清单
+
+If you only want the shortest practical checklist, use this:
+
+如果你只想要最短的实用清单，可以抄这个：
+
+```bash
+pkg update && pkg upgrade -y
+pkg install -y git nodejs-lts python clang make pkg-config
+npm install -g openclaw
+openclaw --version
+openclaw onboard
+openclaw models status
+openclaw channels login --channel whatsapp
+openclaw gateway
+```
+
+If install fails around native modules:
+
+如果安装卡在原生模块：
+
+```bash
+pkg install -y libvips rust
+npm install -g node-gyp node-addon-api
+SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install -g openclaw --no-fund --no-audit --loglevel error
+```
+
+If image reading later breaks with `sharp` on Android:
+
+如果后面 Android 上识图又因为 `sharp` 炸了：
+
+```bash
+cd /data/data/com.termux/files/usr/lib/node_modules/openclaw
+npm_config_cpu=wasm32 npm_config_force=true npm install --no-save @img/sharp-wasm32@0.34.5
+```
+
+---
+
 ## Suggested future additions | 后续可补充内容
 
 This repo can be expanded later with:
@@ -605,6 +1026,8 @@ This repo can be expanded later with:
 - version-specific notes for future OpenClaw releases
 - a local-memory starter template
 - a minimal SQLite memory schema example
+- a dedicated WhatsApp troubleshooting matrix
+- a provider-by-provider auth cheat sheet
 
 - 一份更干净的逐步安装脚本
 - 一份新机器初始化指南
@@ -612,3 +1035,5 @@ This repo can be expanded later with:
 - 后续 OpenClaw 新版本的专项兼容记录
 - 一份本地 memory 起步模板
 - 一个最小可用的 SQLite memory schema 示例
+- 一份专门的 WhatsApp 故障矩阵
+- 一份不同模型商认证方式速查表
