@@ -1,9 +1,21 @@
 # OpenClaw on Termux (Android): Install Notes and Issues Encountered
 # OpenClaw 在 Termux（Android）上的安装记录与问题汇总
 
+> Beginner-friendly practical guide for running OpenClaw on Android/Termux, including install steps, WhatsApp pairing notes, OpenAI/Codex model setup, local-memory guidance, and fixes for common native-module failures like `sharp`.
+>
+> 面向新手的实战指南：把 OpenClaw 跑在 Android/Termux 上，包含安装步骤、WhatsApp 配对、OpenAI/Codex 模型接入、本地记忆方案，以及像 `sharp` 这类原生模块故障的修复记录。
+
 This repository is a practical field note for getting OpenClaw working on an Android/Termux machine, plus a running log of the problems encountered so far and the fixes/workarounds that actually worked.
 
 这个仓库是一份实战记录：主要整理 OpenClaw 在 Android/Termux 环境中的安装过程、到目前为止遇到的问题，以及已经验证可行的修复方法和绕路方案。
+
+## TL;DR | 一句话看点
+
+- Install OpenClaw on Android/Termux | 在 Android/Termux 上安装 OpenClaw
+- Set up OpenAI API key or Codex login | 配置 OpenAI API key 或 Codex 登录
+- Connect WhatsApp and handle QR/pairing issues | 连接 WhatsApp 并处理二维码/配对问题
+- Understand online memory risks and build local memory instead | 了解在线 memory 风险，并搭建本地记忆
+- Fix common Termux-native dependency breakage, especially `sharp` image runtime failures | 修复常见 Termux 原生依赖问题，尤其是 `sharp` 识图运行时故障
 
 ---
 
